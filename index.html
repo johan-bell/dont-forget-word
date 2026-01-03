@@ -120,11 +120,121 @@
         VOIR TOUTE LA BIBLIO
       </button>
 
-      <!-- Section 2: Mode Finale -->
+      <!-- Section 2: Statistiques du Jeu -->
       <h3
         class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
       >
-        2. Mode Finale
+        2. Statistiques du Jeu
+      </h3>
+      <div
+        class="bg-gray-900 border border-gray-700 rounded-lg p-4 mb-4 game-stat-card"
+      >
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div class="text-center">
+            <div class="text-xs text-gray-400 mb-1 uppercase tracking-wider">
+              SCORE
+            </div>
+            <div
+              id="game-score"
+              class="text-2xl font-bold text-yellow-400 stat-value"
+            >
+              0
+            </div>
+          </div>
+          <div class="text-center">
+            <div class="text-xs text-gray-400 mb-1 uppercase tracking-wider">
+              MANCHE
+            </div>
+            <div
+              id="game-round"
+              class="text-2xl font-bold text-blue-400 stat-value"
+            >
+              1
+            </div>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div class="text-center">
+            <div class="text-xs text-gray-400 mb-1 uppercase tracking-wider">
+              PRÉCISION
+            </div>
+            <div
+              id="game-accuracy"
+              class="text-xl font-bold text-green-400 stat-value"
+            >
+              0%
+            </div>
+          </div>
+          <div class="text-center">
+            <div class="text-xs text-gray-400 mb-1 uppercase tracking-wider">
+              TEMPS
+            </div>
+            <div
+              id="game-timer"
+              class="text-xl font-bold text-purple-400 stat-value"
+            >
+              00:00.0
+            </div>
+          </div>
+        </div>
+        <div id="game-stats" class="text-center space-y-1"></div>
+      </div>
+      <div class="flex gap-2 mb-4">
+        <button
+          onclick="startTimer()"
+          class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded text-sm transition-colors"
+          aria-label="Démarrer le chronomètre"
+        >
+          START
+        </button>
+        <button
+          onclick="stopTimer()"
+          class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded text-sm transition-colors"
+          aria-label="Arrêter le chronomètre"
+        >
+          STOP
+        </button>
+        <button
+          onclick="resetTimer()"
+          class="flex-1 bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-3 rounded text-sm transition-colors"
+          aria-label="Réinitialiser le chronomètre"
+        >
+          RESET
+        </button>
+      </div>
+      <label class="flex items-center gap-2 mb-4 cursor-pointer">
+        <input
+          type="checkbox"
+          id="auto-start-timer"
+          checked
+          class="w-4 h-4 text-yellow-400 bg-gray-700 border-gray-600 rounded focus:ring-yellow-400"
+        />
+        <span class="text-sm text-gray-300"
+          >Démarrer le timer automatiquement</span
+        >
+      </label>
+      <div class="flex gap-2 mb-6">
+        <button
+          onclick="nextRound()"
+          class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-3 rounded text-sm transition-colors"
+          aria-label="Manche suivante"
+        >
+          MANCHE SUIV.
+        </button>
+        <button
+          onclick="resetRound()"
+          class="flex-1 bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-3 rounded text-sm transition-colors"
+          aria-label="Réinitialiser la manche"
+        >
+          RÉINIT. MANCHE
+        </button>
+      </div>
+
+      <!-- Section 3: Mode Finale -->
+      <h3
+        class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
+      >
+        3. Mode Finale
       </h3>
       <button
         onclick="activateFinale()"
@@ -134,11 +244,11 @@
         MODE TOUS LES PIÈGES
       </button>
 
-      <!-- Section 3: Correction -->
+      <!-- Section 4: Correction -->
       <h3
         class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
       >
-        3. Correction
+        4. Correction
       </h3>
       <textarea
         id="in-compare"
@@ -154,11 +264,11 @@
         VÉRIFIER LE SCORE
       </button>
 
-      <!-- Section 4: Contrôles -->
+      <!-- Section 5: Contrôles -->
       <h3
         class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
       >
-        4. Contrôles
+        5. Contrôles
       </h3>
       <select
         id="sel-mode"

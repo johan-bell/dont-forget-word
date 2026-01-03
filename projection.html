@@ -91,6 +91,68 @@
         transform: translateY(0);
       }
 
+      #game-stats {
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(10px);
+        border: 2px solid #3b82f6;
+        border-radius: 12px;
+        padding: 16px 20px;
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        min-width: 200px;
+      }
+
+      #game-stats.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      #game-stats .stat-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 8px;
+        font-size: 1rem;
+      }
+
+      #game-stats .stat-item:last-child {
+        margin-bottom: 0;
+      }
+
+      #game-stats .stat-label {
+        color: #9ca3af;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      #game-stats .stat-value {
+        color: #ffffff;
+        font-weight: 700;
+        font-size: 1.2rem;
+      }
+
+      #game-stats .stat-value.score {
+        color: #fbbf24;
+      }
+
+      #game-stats .stat-value.round {
+        color: #60a5fa;
+      }
+
+      #game-stats .stat-value.timer {
+        color: #a78bfa;
+      }
+
+      #game-stats .stat-value.accuracy {
+        color: #34d399;
+      }
+
       #disp {
         font-size: clamp(2.5rem, 8vw, 5rem);
         padding: 40px 60px;
@@ -228,6 +290,24 @@
   </head>
   <body>
     <div id="info" role="status" aria-live="polite"></div>
+    <div id="game-stats" role="status" aria-live="polite">
+      <div class="stat-item">
+        <span class="stat-label">Score</span>
+        <span class="stat-value score" id="proj-score">0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Manche</span>
+        <span class="stat-value round" id="proj-round">1</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Temps</span>
+        <span class="stat-value timer" id="proj-timer">00:00.0</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-label">Précision</span>
+        <span class="stat-value accuracy" id="proj-accuracy">0%</span>
+      </div>
+    </div>
     <div id="disp" role="main" aria-live="polite" class="ready">PRÊT</div>
 
     <script>
@@ -260,6 +340,7 @@
         try {
           const infoEl = document.getElementById("info");
           const disp = document.getElementById("disp");
+          const gameStatsEl = document.getElementById("game-stats");
 
           // Update info badge
           if (projData.info && projData.info.trim()) {
@@ -267,6 +348,23 @@
             infoEl.classList.add("show");
           } else {
             infoEl.classList.remove("show");
+          }
+
+          // Update game statistics
+          if (projData.gameState) {
+            const scoreEl = document.getElementById("proj-score");
+            const roundEl = document.getElementById("proj-round");
+            const timerEl = document.getElementById("proj-timer");
+            const accuracyEl = document.getElementById("proj-accuracy");
+
+            if (scoreEl) scoreEl.textContent = projData.gameState.score || "0";
+            if (roundEl) roundEl.textContent = projData.gameState.round || "1";
+            if (timerEl) timerEl.textContent = projData.gameState.timer || "00:00.0";
+            if (accuracyEl) accuracyEl.textContent = projData.gameState.accuracy || "0%";
+
+            gameStatsEl.classList.add("show");
+          } else {
+            gameStatsEl.classList.remove("show");
           }
 
           // Update main display
