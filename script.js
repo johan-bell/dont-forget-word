@@ -14,23 +14,45 @@ let broadcastChannel = null;
 
 // Game state (TV show features)
 let gameState = {
-  round: 1,
-  score: 0,
-  totalLines: 0,
-  correctLines: 0,
-  timer: {
-    running: false,
-    startTime: null,
-    elapsed: 0,
-    interval: null,
-  },
-  stats: {
-    totalTime: 0,
-    averageTimePerLine: 0,
-    accuracy: 0,
-  },
+  players: [], // Array of player/team objects
+  currentPlayerIndex: -1, // Index of currently active player/team
   showStatsOnProjection: true, // Control whether stats are displayed on projection
 };
+
+// Player/Team structure
+function createPlayer(name, isTeam = false) {
+  return {
+    id: Date.now() + Math.random(), // Unique ID
+    name: name,
+    isTeam: isTeam,
+    round: 1,
+    score: 0,
+    totalLines: 0,
+    correctLines: 0,
+    timer: {
+      running: false,
+      startTime: null,
+      elapsed: 0,
+      interval: null,
+    },
+    stats: {
+      totalTime: 0,
+      averageTimePerLine: 0,
+      accuracy: 0,
+    },
+  };
+}
+
+// Get current player
+function getCurrentPlayer() {
+  if (
+    gameState.currentPlayerIndex >= 0 &&
+    gameState.currentPlayerIndex < gameState.players.length
+  ) {
+    return gameState.players[gameState.currentPlayerIndex];
+  }
+  return null;
+}
 
 // Load data from localStorage with error handling
 function loadStorage() {
@@ -462,16 +484,19 @@ function loadSong(n, c) {
   cursor = -1;
   finale = false;
 
-  // Reset game state
-  gameState.totalLines = songData.length;
-  gameState.correctLines = 0;
-  gameState.score = 0;
-  gameState.round = 1;
-  gameState.stats.totalTime = 0;
-  gameState.stats.averageTimePerLine = 0;
-  gameState.stats.accuracy = 0;
-  stopTimer();
-  resetTimer();
+  // Reset game state for current player
+  const player = getCurrentPlayer();
+  if (player) {
+    player.totalLines = songData.length;
+    player.correctLines = 0;
+    player.score = 0;
+    player.round = 1;
+    player.stats.totalTime = 0;
+    player.stats.averageTimePerLine = 0;
+    player.stats.accuracy = 0;
+    stopTimer();
+    resetTimer();
+  }
 
   renderRegie();
   closeLib();
@@ -577,11 +602,13 @@ function syncNowInternal(val) {
       : "",
     content: content,
     gameState: {
-      score: gameState.score,
-      round: gameState.round,
-      timer: formatTime(gameState.timer.elapsed),
-      accuracy: gameState.stats.accuracy.toFixed(1) + "%",
+      score: player ? player.score : 0,
+      round: player ? player.round : 1,
+      timer: player ? formatTime(player.timer.elapsed) : "00:00.0",
+      accuracy: player ? player.stats.accuracy.toFixed(1) + "%" : "0%",
       showStats: gameState.showStatsOnProjection,
+      playerName: player ? player.name : "",
+      isTeam: player ? player.isTeam : false,
     },
   };
   sendToProjection(projData);
@@ -606,17 +633,20 @@ function sendToProjection(projData) {
  * Update projection data in localStorage for the projection window to read
  */
 function updateProjectionData() {
+  const player = getCurrentPlayer();
   const projData = {
     info: currentInfo.n
       ? `${escapeHtml(currentInfo.c)} - N°${escapeHtml(currentInfo.n)}`
       : "",
     content: lastProjectionContent || "PRÊT", // Preserve existing content or show ready state
     gameState: {
-      score: gameState.score,
-      round: gameState.round,
-      timer: formatTime(gameState.timer.elapsed),
-      accuracy: gameState.stats.accuracy.toFixed(1) + "%",
+      score: player ? player.score : 0,
+      round: player ? player.round : 1,
+      timer: player ? formatTime(player.timer.elapsed) : "00:00.0",
+      accuracy: player ? player.stats.accuracy.toFixed(1) + "%" : "0%",
       showStats: gameState.showStatsOnProjection,
+      playerName: player ? player.name : "",
+      isTeam: player ? player.isTeam : false,
     },
   };
   sendToProjection(projData);
@@ -661,17 +691,20 @@ function openProj() {
  * Update the projection view
  */
 function updateView(custom = null) {
+  const player = getCurrentPlayer();
   const projData = {
     info: currentInfo.n
       ? `${escapeHtml(currentInfo.c)} - N°${escapeHtml(currentInfo.n)}`
       : "",
     content: "",
     gameState: {
-      score: gameState.score,
-      round: gameState.round,
-      timer: formatTime(gameState.timer.elapsed),
-      accuracy: gameState.stats.accuracy.toFixed(1) + "%",
+      score: player ? player.score : 0,
+      round: player ? player.round : 1,
+      timer: player ? formatTime(player.timer.elapsed) : "00:00.0",
+      accuracy: player ? player.stats.accuracy.toFixed(1) + "%" : "0%",
       showStats: gameState.showStatsOnProjection,
+      playerName: player ? player.name : "",
+      isTeam: player ? player.isTeam : false,
     },
   };
 
@@ -747,19 +780,20 @@ function verifyNow() {
   const accuracy = totalWords > 0 ? (correctWords / totalWords) * 100 : 0;
   const lineScore = Math.round(accuracy);
 
-  // Update game state
-  if (!finale && cursor >= 0) {
-    const lineTime = gameState.timer.elapsed;
-    gameState.stats.totalTime += lineTime;
+  // Update game state for current player
+  const player = getCurrentPlayer();
+  if (!finale && cursor >= 0 && player) {
+    const lineTime = player.timer.elapsed;
+    player.stats.totalTime += lineTime;
 
-    const previousScore = gameState.score;
+    const previousScore = player.score;
     if (accuracy >= 80) {
       // 80% accuracy threshold for "correct"
-      gameState.correctLines++;
-      gameState.score += lineScore;
+      player.correctLines++;
+      player.score += lineScore;
 
       // Animate score increase
-      if (gameState.score > previousScore) {
+      if (player.score > previousScore) {
         const scoreEl = document.getElementById("game-score");
         if (scoreEl) {
           scoreEl.classList.add("score-increase");
@@ -768,9 +802,8 @@ function verifyNow() {
       }
     }
 
-    gameState.stats.averageTimePerLine =
-      gameState.stats.totalTime / (cursor + 1);
-    gameState.stats.accuracy = (gameState.correctLines / (cursor + 1)) * 100;
+    player.stats.averageTimePerLine = player.stats.totalTime / (cursor + 1);
+    player.stats.accuracy = (player.correctLines / (cursor + 1)) * 100;
 
     stopTimer();
   }
@@ -794,8 +827,9 @@ function activateFinale() {
  */
 function goNext() {
   if (cursor < songData.length - 1) {
+    const player = getCurrentPlayer();
     // Stop timer for previous line if it was running
-    if (gameState.timer.running) {
+    if (player && player.timer.running) {
       stopTimer();
     }
 
@@ -805,7 +839,7 @@ function goNext() {
 
     // Start timer for new line if auto-start is enabled
     const autoStart = document.getElementById("auto-start-timer");
-    if (autoStart && autoStart.checked) {
+    if (autoStart && autoStart.checked && player) {
       resetTimer();
       startTimer();
     }
@@ -820,7 +854,8 @@ function goNext() {
  */
 function goPrev() {
   if (cursor > 0) {
-    if (gameState.timer.running) {
+    const player = getCurrentPlayer();
+    if (player && player.timer.running) {
       stopTimer();
     }
     cursor--;
@@ -918,31 +953,36 @@ function importData() {
  * Timer functions for game show features
  */
 function startTimer() {
-  if (gameState.timer.running) return;
+  const player = getCurrentPlayer();
+  if (!player || player.timer.running) return;
 
-  gameState.timer.running = true;
-  gameState.timer.startTime = Date.now() - gameState.timer.elapsed;
+  player.timer.running = true;
+  player.timer.startTime = Date.now() - player.timer.elapsed;
 
-  gameState.timer.interval = setInterval(() => {
-    gameState.timer.elapsed = Date.now() - gameState.timer.startTime;
+  player.timer.interval = setInterval(() => {
+    player.timer.elapsed = Date.now() - player.timer.startTime;
     updateTimerDisplay();
   }, 100);
 }
 
 function stopTimer() {
-  if (!gameState.timer.running) return;
+  const player = getCurrentPlayer();
+  if (!player || !player.timer.running) return;
 
-  gameState.timer.running = false;
-  if (gameState.timer.interval) {
-    clearInterval(gameState.timer.interval);
-    gameState.timer.interval = null;
+  player.timer.running = false;
+  if (player.timer.interval) {
+    clearInterval(player.timer.interval);
+    player.timer.interval = null;
   }
 }
 
 function resetTimer() {
+  const player = getCurrentPlayer();
+  if (!player) return;
+
   stopTimer();
-  gameState.timer.elapsed = 0;
-  gameState.timer.startTime = null;
+  player.timer.elapsed = 0;
+  player.timer.startTime = null;
   updateTimerDisplay();
 }
 
@@ -957,10 +997,11 @@ function formatTime(ms) {
 }
 
 function updateTimerDisplay() {
+  const player = getCurrentPlayer();
   const timerEl = document.getElementById("game-timer");
-  if (timerEl) {
-    timerEl.textContent = formatTime(gameState.timer.elapsed);
-    if (gameState.timer.running) {
+  if (timerEl && player) {
+    timerEl.textContent = formatTime(player.timer.elapsed);
+    if (player.timer.running) {
       timerEl.classList.add("timer-running");
     } else {
       timerEl.classList.remove("timer-running");
@@ -978,6 +1019,8 @@ let lastProjectionContent = "";
  * Update game display UI elements only (without sending projection data)
  */
 function updateGameDisplayUI() {
+  const player = getCurrentPlayer();
+
   // Update main display
   const scoreEl = document.getElementById("game-score");
   const roundEl = document.getElementById("game-round");
@@ -985,28 +1028,40 @@ function updateGameDisplayUI() {
   const timerEl = document.getElementById("game-timer");
   const statsEl = document.getElementById("game-stats");
 
-  if (scoreEl) scoreEl.textContent = gameState.score;
-  if (roundEl) roundEl.textContent = gameState.round;
-  if (accuracyEl) {
-    const acc = gameState.stats.accuracy.toFixed(1);
-    accuracyEl.textContent = `${acc}%`;
-  }
-  if (timerEl) {
-    timerEl.textContent = formatTime(gameState.timer.elapsed);
-  }
-  if (statsEl) {
-    const avgTime =
-      gameState.stats.averageTimePerLine > 0
-        ? formatTime(gameState.stats.averageTimePerLine)
-        : "00:00.0";
-    statsEl.innerHTML = `
-      <div class="text-xs text-gray-400">Lignes: ${cursor + 1}/${
-      gameState.totalLines
-    }</div>
-      <div class="text-xs text-gray-400">Correctes: ${
-        gameState.correctLines
+  if (player) {
+    if (scoreEl) scoreEl.textContent = player.score;
+    if (roundEl) roundEl.textContent = player.round;
+    if (accuracyEl) {
+      const acc = player.stats.accuracy.toFixed(1);
+      accuracyEl.textContent = `${acc}%`;
+    }
+    if (timerEl) {
+      timerEl.textContent = formatTime(player.timer.elapsed);
+    }
+    if (statsEl) {
+      const avgTime =
+        player.stats.averageTimePerLine > 0
+          ? formatTime(player.stats.averageTimePerLine)
+          : "00:00.0";
+      statsEl.innerHTML = `
+        <div class="text-xs text-gray-400">Lignes: ${cursor + 1}/${
+        player.totalLines || 0
       }</div>
-      <div class="text-xs text-gray-400">Temps moyen: ${avgTime}</div>
+        <div class="text-xs text-gray-400">Correctes: ${
+          player.correctLines
+        }</div>
+        <div class="text-xs text-gray-400">Temps moyen: ${avgTime}</div>
+      `;
+    }
+  } else {
+    // No player selected
+    if (scoreEl) scoreEl.textContent = "0";
+    if (roundEl) roundEl.textContent = "-";
+    if (accuracyEl) accuracyEl.textContent = "0%";
+    if (timerEl) timerEl.textContent = "00:00.0";
+    if (statsEl)
+      statsEl.innerHTML = `
+      <div class="text-xs text-gray-400">Aucun joueur sélectionné</div>
     `;
   }
 }
@@ -1026,11 +1081,177 @@ function toggleStatsDisplay(show) {
 }
 
 /**
+ * Add a new player or team
+ */
+function addPlayer() {
+  const nameInput = document.getElementById("new-player-name");
+  const isTeamCheckbox = document.getElementById("new-player-is-team");
+  const name = nameInput.value.trim();
+
+  if (!name) {
+    showToast("Veuillez entrer un nom", "error");
+    return;
+  }
+
+  const player = createPlayer(name, isTeamCheckbox.checked);
+  gameState.players.push(player);
+
+  // If it's the first player, make them active
+  if (gameState.players.length === 1) {
+    gameState.currentPlayerIndex = 0;
+  }
+
+  nameInput.value = "";
+  isTeamCheckbox.checked = false;
+  renderPlayerList();
+  updateGameDisplay();
+  showToast(
+    `${player.isTeam ? "Équipe" : "Joueur"} "${name}" ajouté(e)`,
+    "success"
+  );
+}
+
+/**
+ * Remove a player or team
+ */
+function removePlayer(playerId) {
+  const player = gameState.players.find((p) => p.id === playerId);
+  if (!player) return;
+
+  if (
+    confirm(
+      `Supprimer ${player.isTeam ? "l'équipe" : "le joueur"} "${player.name}" ?`
+    )
+  ) {
+    const index = gameState.players.findIndex((p) => p.id === playerId);
+    gameState.players.splice(index, 1);
+
+    // Adjust current player index
+    if (gameState.currentPlayerIndex >= gameState.players.length) {
+      gameState.currentPlayerIndex = gameState.players.length - 1;
+    }
+    if (gameState.currentPlayerIndex < 0 && gameState.players.length > 0) {
+      gameState.currentPlayerIndex = 0;
+    }
+
+    renderPlayerList();
+    updateGameDisplay();
+    showToast(`${player.isTeam ? "Équipe" : "Joueur"} supprimé(e)`, "success");
+  }
+}
+
+/**
+ * Switch to a different player/team
+ */
+function switchPlayer(playerIndex) {
+  const index = parseInt(playerIndex);
+  if (index >= 0 && index < gameState.players.length) {
+    // Stop timer for previous player
+    const prevPlayer = getCurrentPlayer();
+    if (prevPlayer && prevPlayer.timer.running) {
+      stopTimer();
+    }
+
+    gameState.currentPlayerIndex = index;
+    renderPlayerList();
+    updateGameDisplay();
+
+    const player = getCurrentPlayer();
+    if (player) {
+      showToast(
+        `${player.isTeam ? "Équipe" : "Joueur"} "${
+          player.name
+        }" sélectionné(e)`,
+        "info"
+      );
+    }
+  }
+}
+
+/**
+ * Render the player list
+ */
+function renderPlayerList() {
+  const playerListEl = document.getElementById("player-list");
+  const playerSelectEl = document.getElementById("player-select");
+
+  if (!playerListEl || !playerSelectEl) return;
+
+  // Clear lists
+  playerListEl.innerHTML = "";
+  playerSelectEl.innerHTML =
+    '<option value="-1">Sélectionner un joueur/équipe...</option>';
+
+  gameState.players.forEach((player, index) => {
+    const isActive = index === gameState.currentPlayerIndex;
+    const activeClass = isActive
+      ? "border-yellow-400 bg-yellow-400 bg-opacity-10"
+      : "border-gray-600";
+
+    // Add to dropdown
+    const option = document.createElement("option");
+    option.value = index;
+    option.textContent = `${player.isTeam ? "Équipe" : "Joueur"}: ${
+      player.name
+    }`;
+    if (isActive) option.selected = true;
+    playerSelectEl.appendChild(option);
+
+    // Add to list
+    const playerDiv = document.createElement("div");
+    playerDiv.className = `border rounded p-2 ${activeClass} flex items-center justify-between`;
+    playerDiv.innerHTML = `
+      <div class="flex-1">
+        <div class="font-semibold text-sm">${escapeHtml(player.name)}</div>
+        <div class="text-xs text-gray-400">
+          ${player.isTeam ? "Équipe" : "Joueur"} • Score: ${
+      player.score
+    } • Manche: ${player.round}
+        </div>
+      </div>
+      <div class="flex gap-1">
+        <button
+          onclick="switchPlayer(${index})"
+          class="bg-blue-600 hover:bg-blue-700 text-white px-2 py-1 rounded text-xs transition-colors"
+          aria-label="Sélectionner ${player.name}"
+        >
+          ${isActive ? "✓" : "→"}
+        </button>
+        <button
+          onclick="removePlayer(${player.id})"
+          class="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs transition-colors"
+          aria-label="Supprimer ${player.name}"
+        >
+          ×
+        </button>
+      </div>
+    `;
+    playerListEl.appendChild(playerDiv);
+  });
+}
+
+/**
  * Update game display (score, timer, stats) and send to projection
  */
 function updateGameDisplay() {
   // Update UI elements
   updateGameDisplayUI();
+
+  const player = getCurrentPlayer();
+  if (!player) {
+    // No player selected
+    const projData = {
+      info: currentInfo.n
+        ? `${escapeHtml(currentInfo.c)} - N°${escapeHtml(currentInfo.n)}`
+        : "",
+      content: lastProjectionContent,
+      gameState: {
+        showStats: gameState.showStatsOnProjection,
+      },
+    };
+    sendToProjection(projData);
+    return;
+  }
 
   // Send game state to projection, preserving existing content
   const projData = {
@@ -1039,10 +1260,12 @@ function updateGameDisplay() {
       : "",
     content: lastProjectionContent, // Preserve the last content
     gameState: {
-      score: gameState.score,
-      round: gameState.round,
-      timer: formatTime(gameState.timer.elapsed),
-      accuracy: gameState.stats.accuracy.toFixed(1) + "%",
+      playerName: player.name,
+      isTeam: player.isTeam,
+      score: player.score,
+      round: player.round,
+      timer: formatTime(player.timer.elapsed),
+      accuracy: player.stats.accuracy.toFixed(1) + "%",
       showStats: gameState.showStatsOnProjection,
     },
   };
@@ -1053,9 +1276,14 @@ function updateGameDisplay() {
  * Advance to next round
  */
 function nextRound() {
-  gameState.round++;
+  const player = getCurrentPlayer();
+  if (!player) {
+    showToast("Aucun joueur sélectionné", "error");
+    return;
+  }
+  player.round++;
   resetTimer();
-  showToast(`Manche ${gameState.round} commencée !`, "info");
+  showToast(`Manche ${player.round} commencée pour ${player.name} !`, "info");
   updateGameDisplay();
 }
 
@@ -1063,15 +1291,25 @@ function nextRound() {
  * Reset current round
  */
 function resetRound() {
-  if (confirm("Réinitialiser la manche actuelle ? Le score sera conservé.")) {
+  const player = getCurrentPlayer();
+  if (!player) {
+    showToast("Aucun joueur sélectionné", "error");
+    return;
+  }
+
+  if (
+    confirm(
+      `Réinitialiser la manche actuelle pour ${player.name} ? Le score sera conservé.`
+    )
+  ) {
     cursor = -1;
     finale = false;
     resetTimer();
     document.getElementById("in-compare").value = "";
-    gameState.correctLines = 0;
-    gameState.stats.totalTime = 0;
-    gameState.stats.averageTimePerLine = 0;
-    gameState.stats.accuracy = 0;
+    player.correctLines = 0;
+    player.stats.totalTime = 0;
+    player.stats.averageTimePerLine = 0;
+    player.stats.accuracy = 0;
     updateView("PRÊT");
     updateGameDisplay();
     renderRegie();

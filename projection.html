@@ -23,7 +23,6 @@
         color: white;
         text-align: center;
         font-family: "Arial", "Helvetica Neue", sans-serif;
-        text-transform: uppercase;
         display: flex;
         flex-direction: column;
         justify-content: center;
@@ -169,6 +168,7 @@
         transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         word-wrap: break-word;
         overflow-wrap: break-word;
+        text-transform: none; /* Preserve original case for lyrics */
       }
 
       /* Smooth fade-in animation for content changes */
@@ -292,6 +292,21 @@
   <body>
     <div id="info" role="status" aria-live="polite"></div>
     <div id="game-stats" role="status" aria-live="polite">
+      <div
+        class="stat-item"
+        id="proj-player-name"
+        style="
+          display: none;
+          border-bottom: 1px solid rgba(59, 130, 246, 0.3);
+          padding-bottom: 8px;
+          margin-bottom: 8px;
+        "
+      >
+        <!-- <span class="stat-label" style="font-size: 0.9rem; color: #ffcc00"
+          >Joueur</span
+        > -->
+        <span class="stat-value" style="font-size: 1rem; color: #ffcc00"></span>
+      </div>
       <div class="stat-item">
         <span class="stat-label">Score</span>
         <span class="stat-value score" id="proj-score">0</span>
@@ -357,11 +372,28 @@
             const roundEl = document.getElementById("proj-round");
             const timerEl = document.getElementById("proj-timer");
             const accuracyEl = document.getElementById("proj-accuracy");
+            const playerNameEl = document.getElementById("proj-player-name");
 
             if (scoreEl) scoreEl.textContent = projData.gameState.score || "0";
             if (roundEl) roundEl.textContent = projData.gameState.round || "1";
-            if (timerEl) timerEl.textContent = projData.gameState.timer || "00:00.0";
-            if (accuracyEl) accuracyEl.textContent = projData.gameState.accuracy || "0%";
+            if (timerEl)
+              timerEl.textContent = projData.gameState.timer || "00:00.0";
+            if (accuracyEl)
+              accuracyEl.textContent = projData.gameState.accuracy || "0%";
+
+            // Update player name if available
+            if (playerNameEl && projData.gameState.playerName) {
+              const playerType = projData.gameState.isTeam
+                ? "Équipe"
+                : "Joueur";
+              const playerValueSpan = playerNameEl.querySelector(".stat-value");
+              if (playerValueSpan) {
+                playerValueSpan.textContent = `${playerType}: ${projData.gameState.playerName}`;
+              }
+              playerNameEl.style.display = "flex";
+            } else if (playerNameEl) {
+              playerNameEl.style.display = "none";
+            }
 
             // Show/hide entire stats panel based on setting
             const showStats = projData.gameState.showStats !== false; // Default to true if not specified

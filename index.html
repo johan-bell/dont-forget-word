@@ -120,11 +120,57 @@
         VOIR TOUTE LA BIBLIO
       </button>
 
-      <!-- Section 2: Statistiques du Jeu -->
+      <!-- Section 2: Joueurs/Équipes -->
       <h3
         class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
       >
-        2. Statistiques du Jeu
+        2. Joueurs/Équipes
+      </h3>
+      <div class="mb-4">
+        <div class="flex gap-2 mb-3">
+          <input
+            type="text"
+            id="new-player-name"
+            placeholder="Nom du joueur/équipe"
+            class="flex-1 bg-black text-white border border-gray-600 p-2 rounded text-sm focus:outline-none focus:border-blue-500"
+            aria-label="Nom du nouveau joueur ou équipe"
+            onkeypress="if(event.key==='Enter') addPlayer()"
+          />
+          <button
+            onclick="addPlayer()"
+            class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded text-sm transition-colors"
+            aria-label="Ajouter un joueur ou équipe"
+          >
+            +
+          </button>
+        </div>
+        <label class="flex items-center gap-2 mb-3 cursor-pointer">
+          <input
+            type="checkbox"
+            id="new-player-is-team"
+            class="w-4 h-4 text-yellow-400 bg-gray-700 border-gray-600 rounded focus:ring-yellow-400"
+          />
+          <span class="text-sm text-gray-300">C'est une équipe</span>
+        </label>
+        <select
+          id="player-select"
+          onchange="switchPlayer(this.value)"
+          class="w-full bg-black text-white border border-gray-600 p-2 rounded text-sm mb-3 focus:outline-none focus:border-blue-500"
+          aria-label="Sélectionner un joueur ou équipe"
+        >
+          <option value="-1">Sélectionner un joueur/équipe...</option>
+        </select>
+        <div
+          id="player-list"
+          class="space-y-2 mb-4 max-h-40 overflow-y-auto"
+        ></div>
+      </div>
+
+      <!-- Section 3: Statistiques du Jeu -->
+      <h3
+        class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
+      >
+        3. Statistiques du Jeu
       </h3>
       <div
         class="bg-gray-900 border border-gray-700 rounded-lg p-4 mb-4 game-stat-card"
@@ -242,11 +288,11 @@
         </button>
       </div>
 
-      <!-- Section 3: Mode Finale -->
+      <!-- Section 4: Mode Finale -->
       <h3
         class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
       >
-        3. Mode Finale
+        4. Mode Finale
       </h3>
       <button
         onclick="activateFinale()"
@@ -256,11 +302,11 @@
         MODE TOUS LES PIÈGES
       </button>
 
-      <!-- Section 4: Correction -->
+      <!-- Section 5: Correction -->
       <h3
         class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
       >
-        4. Correction
+        5. Correction
       </h3>
       <textarea
         id="in-compare"
@@ -276,11 +322,11 @@
         VÉRIFIER LE SCORE
       </button>
 
-      <!-- Section 5: Contrôles -->
+      <!-- Section 6: Contrôles -->
       <h3
         class="text-yellow-400 border-b border-gray-600 pb-2 mb-4 text-sm uppercase font-semibold"
       >
-        5. Contrôles
+        6. Contrôles
       </h3>
       <select
         id="sel-mode"
@@ -342,6 +388,9 @@
         if (showStatsCheckbox) {
           showStatsCheckbox.checked = true; // Default to showing stats
         }
+
+        // Initialize player list
+        renderPlayerList();
       });
     </script>
   </body>
