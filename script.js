@@ -29,6 +29,7 @@ let gameState = {
     averageTimePerLine: 0,
     accuracy: 0,
   },
+  showStatsOnProjection: true, // Control whether stats are displayed on projection
 };
 
 // Load data from localStorage with error handling
@@ -474,6 +475,13 @@ function loadSong(n, c) {
 
   renderRegie();
   closeLib();
+
+  // Initialize checkbox states
+  const showStatsCheckbox = document.getElementById("show-stats-projection");
+  if (showStatsCheckbox) {
+    showStatsCheckbox.checked = gameState.showStatsOnProjection;
+  }
+
   updateView("PRÊT");
   updateGameDisplay();
   showToast(`Chant ${n} chargé`, "success");
@@ -573,6 +581,7 @@ function syncNowInternal(val) {
       round: gameState.round,
       timer: formatTime(gameState.timer.elapsed),
       accuracy: gameState.stats.accuracy.toFixed(1) + "%",
+      showStats: gameState.showStatsOnProjection,
     },
   };
   sendToProjection(projData);
@@ -607,6 +616,7 @@ function updateProjectionData() {
       round: gameState.round,
       timer: formatTime(gameState.timer.elapsed),
       accuracy: gameState.stats.accuracy.toFixed(1) + "%",
+      showStats: gameState.showStatsOnProjection,
     },
   };
   sendToProjection(projData);
@@ -661,6 +671,7 @@ function updateView(custom = null) {
       round: gameState.round,
       timer: formatTime(gameState.timer.elapsed),
       accuracy: gameState.stats.accuracy.toFixed(1) + "%",
+      showStats: gameState.showStatsOnProjection,
     },
   };
 
@@ -1001,6 +1012,20 @@ function updateGameDisplayUI() {
 }
 
 /**
+ * Toggle stats display on projection
+ */
+function toggleStatsDisplay(show) {
+  gameState.showStatsOnProjection = show;
+  updateGameDisplay();
+  showToast(
+    show
+      ? "Stats affichées sur la projection"
+      : "Stats masquées sur la projection",
+    "info"
+  );
+}
+
+/**
  * Update game display (score, timer, stats) and send to projection
  */
 function updateGameDisplay() {
@@ -1018,6 +1043,7 @@ function updateGameDisplay() {
       round: gameState.round,
       timer: formatTime(gameState.timer.elapsed),
       accuracy: gameState.stats.accuracy.toFixed(1) + "%",
+      showStats: gameState.showStatsOnProjection,
     },
   };
   sendToProjection(projData);

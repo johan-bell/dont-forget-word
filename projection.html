@@ -118,6 +118,7 @@
         align-items: center;
         margin-bottom: 8px;
         font-size: 1rem;
+        transition: opacity 0.3s ease;
       }
 
       #game-stats .stat-item:last-child {
@@ -362,7 +363,13 @@
             if (timerEl) timerEl.textContent = projData.gameState.timer || "00:00.0";
             if (accuracyEl) accuracyEl.textContent = projData.gameState.accuracy || "0%";
 
-            gameStatsEl.classList.add("show");
+            // Show/hide entire stats panel based on setting
+            const showStats = projData.gameState.showStats !== false; // Default to true if not specified
+            if (showStats) {
+              gameStatsEl.classList.add("show");
+            } else {
+              gameStatsEl.classList.remove("show");
+            }
           } else {
             gameStatsEl.classList.remove("show");
           }
