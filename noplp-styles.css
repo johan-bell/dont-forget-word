@@ -1,0 +1,86 @@
+/* Custom styles for NOPLP application */
+
+/* Line item styles */
+.line-item {
+    display: flex;
+    align-items: center;
+    background-color: #1f2937;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.line-item.active {
+    border-left-color: #3b82f6;
+    background-color: #374151;
+}
+
+.line-text {
+    flex: 1;
+    margin: 0 0.75rem;
+}
+
+/* Text color classes */
+.correct {
+    color: #10b981;
+    font-weight: bold;
+}
+
+.wrong {
+    color: #ef4444;
+    font-weight: bold;
+}
+
+.trap-text {
+    color: #fbbf24;
+    letter-spacing: 0.2em;
+}
+
+/* Table styles */
+#lib-table th {
+    border-bottom: 1px solid #4b5563;
+    padding: 0.75rem;
+    text-align: left;
+}
+
+#lib-table td {
+    border-bottom: 1px solid #374151;
+    padding: 0.75rem;
+}
+
+#lib-table tr:hover {
+    background-color: #374151;
+}
+
+/* Modal backdrop */
+#lib-modal {
+    backdrop-filter: blur(4px);
+}
+
+/* Smooth transitions */
+button,
+input,
+select,
+textarea {
+    transition: all 0.2s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-gray-600 rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+}

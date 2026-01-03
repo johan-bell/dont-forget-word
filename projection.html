@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Projection - NOPLP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        background: linear-gradient(
+          135deg,
+          #0a0e27 0%,
+          #1a1f3a 50%,
+          #0a0e27 100%
+        );
+        background-attachment: fixed;
+        color: white;
+        text-align: center;
+        font-family: "Arial", "Helvetica Neue", sans-serif;
+        text-transform: uppercase;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        margin: 0;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Subtle animated background pattern */
+      body::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(
+            circle at 20% 50%,
+            rgba(255, 204, 0, 0.03) 0%,
+            transparent 50%
+          ),
+          radial-gradient(
+            circle at 80% 50%,
+            rgba(59, 130, 246, 0.03) 0%,
+            transparent 50%
+          );
+        pointer-events: none;
+        animation: pulse 8s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      #info {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        color: #ffcc00;
+        border: 2px solid #ffcc00;
+        padding: 12px 20px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        letter-spacing: 1px;
+        background: rgba(0, 0, 0, 0.7);
+        backdrop-filter: blur(10px);
+        border-radius: 8px;
+        box-shadow: 0 4px 20px rgba(255, 204, 0, 0.3);
+        z-index: 1000;
+        transition: all 0.3s ease;
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+
+      #info.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      #disp {
+        font-size: clamp(2.5rem, 8vw, 5rem);
+        padding: 40px 60px;
+        line-height: 1.6;
+        font-weight: 600;
+        letter-spacing: 2px;
+        text-shadow: 0 2px 20px rgba(255, 255, 255, 0.1),
+          0 4px 40px rgba(255, 255, 255, 0.05);
+        max-width: 90%;
+        margin: 0 auto;
+        position: relative;
+        z-index: 10;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+      }
+
+      /* Smooth fade-in animation for content changes */
+      #disp.fade-in {
+        animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Line spacing for multiple lines */
+      #disp > div {
+        margin-bottom: 1.5rem;
+        animation: fadeInLine 0.6s ease-out;
+      }
+
+      #disp > div:last-child {
+        margin-bottom: 0;
+      }
+
+      @keyframes fadeInLine {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Correct/Wrong word styling */
+      .correct {
+        color: #10b981;
+        font-weight: 700;
+        text-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        transition: all 0.3s ease;
+      }
+
+      .wrong {
+        color: #ef4444;
+        font-weight: 700;
+        text-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        transition: all 0.3s ease;
+      }
+
+      /* Italic text for input sync */
+      #disp i {
+        font-style: italic;
+        opacity: 0.9;
+        font-size: 0.85em;
+      }
+
+      /* Ready state styling */
+      #disp.ready {
+        color: rgba(255, 255, 255, 0.4);
+        font-size: clamp(2rem, 6vw, 3.5rem);
+        letter-spacing: 4px;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        #info {
+          top: 10px;
+          right: 10px;
+          padding: 8px 16px;
+          font-size: 0.85rem;
+        }
+
+        #disp {
+          padding: 30px 20px;
+          font-size: clamp(1.8rem, 6vw, 3rem);
+        }
+      }
+
+      @media (max-width: 480px) {
+        #disp {
+          padding: 20px 15px;
+          letter-spacing: 1px;
+        }
+
+        #info {
+          padding: 6px 12px;
+          font-size: 0.75rem;
+        }
+      }
+
+      /* Fullscreen support */
+      @media (display-mode: fullscreen) {
+        body {
+          background: linear-gradient(
+            135deg,
+            #0a0e27 0%,
+            #1a1f3a 50%,
+            #0a0e27 100%
+          );
+        }
+      }
+
+      /* Print styles */
+      @media print {
+        body {
+          background: white;
+          color: black;
+        }
+
+        #info {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="info" role="status" aria-live="polite"></div>
+    <div id="disp" role="main" aria-live="polite" class="ready">PRÊT</div>
+
+    <script>
+      let broadcastChannel = null;
+      let lastContent = "";
+
+      // Try to use BroadcastChannel for real-time updates
+      try {
+        broadcastChannel = new BroadcastChannel("noplp_channel");
+        broadcastChannel.onmessage = function (event) {
+          if (event.data && event.data.type === "update") {
+            updateDisplayFromData(event.data.data);
+          }
+        };
+      } catch (e) {
+        console.warn(
+          "BroadcastChannel not supported, falling back to localStorage polling"
+        );
+      }
+
+      // Escape HTML to prevent XSS
+      function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      // Update display from data object with smooth transitions
+      function updateDisplayFromData(projData) {
+        try {
+          const infoEl = document.getElementById("info");
+          const disp = document.getElementById("disp");
+
+          // Update info badge
+          if (projData.info && projData.info.trim()) {
+            infoEl.innerHTML = escapeHtml(projData.info);
+            infoEl.classList.add("show");
+          } else {
+            infoEl.classList.remove("show");
+          }
+
+          // Update main display
+          let newContent = "";
+          if (projData.content && projData.content.trim()) {
+            newContent = projData.content;
+            disp.classList.remove("ready");
+          } else {
+            newContent = "PRÊT";
+            disp.classList.add("ready");
+          }
+
+          // Only animate if content actually changed
+          if (newContent !== lastContent) {
+            // Add fade-in animation
+            disp.classList.add("fade-in");
+            disp.innerHTML = newContent;
+
+            // Remove animation class after animation completes
+            setTimeout(() => {
+              disp.classList.remove("fade-in");
+            }, 500);
+
+            lastContent = newContent;
+          }
+        } catch (e) {
+          console.error("Error updating display:", e);
+        }
+      }
+
+      // Update display (polling fallback if BroadcastChannel not available)
+      function updateDisplay() {
+        if (broadcastChannel) {
+          // Using BroadcastChannel, no need to poll
+          return;
+        }
+
+        // Fallback to localStorage polling
+        try {
+          const stored = localStorage.getItem("noplp_projection");
+          if (stored) {
+            const projData = JSON.parse(stored);
+            updateDisplayFromData(projData);
+          }
+        } catch (e) {
+          console.error("Error updating display:", e);
+        }
+      }
+
+      // Initial update
+      updateDisplay();
+
+      // Poll every 100ms only if BroadcastChannel is not available
+      if (!broadcastChannel) {
+        setInterval(updateDisplay, 100);
+      }
+
+      // Handle fullscreen API if available
+      document.addEventListener("keydown", function (e) {
+        // F11 or F key for fullscreen
+        if (e.key === "F11") {
+          e.preventDefault();
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch((err) => {
+              console.log("Error attempting to enable fullscreen:", err);
+            });
+          } else {
+            document.exitFullscreen();
+          }
+        }
+      });
+
+      // Prevent context menu on right-click (for cleaner projection experience)
+      document.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+      });
+
+      // Optional: Double-click to toggle fullscreen
+      let lastClickTime = 0;
+      document.addEventListener("click", function (e) {
+        const currentTime = new Date().getTime();
+        const timeSinceLastClick = currentTime - lastClickTime;
+
+        if (timeSinceLastClick < 300 && timeSinceLastClick > 0) {
+          // Double click detected
+          if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch((err) => {
+              console.log("Error attempting to enable fullscreen:", err);
+            });
+          } else {
+            document.exitFullscreen();
+          }
+        }
+
+        lastClickTime = currentTime;
+      });
+    </script>
+  </body>
+</html>
